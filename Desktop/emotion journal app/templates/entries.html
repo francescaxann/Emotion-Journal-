@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Emotion Journal - Entries</title>
+        <link rel="stylesheet" href="/static/styles.css">
+        <style>.entries{display:flex;flex-direction:column;gap:12px}</style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">All Entries</h1>
+        <p class="subtitle">Saved journal entries</p>
+        <div class="entries">
+            {% for entry in entries %}
+                <div class="entry">
+                    <div class="entry-meta">
+                        <div class="tag">{{ entry.emotion }}</div>
+                        <div class="muted">{{ entry.timestamp }}</div>
+                    </div>
+                    <div class="entry-text">{{ entry.note }}</div>
+                </div>
+            {% else %}
+                <div class="muted">No entries yet.</div>
+            {% endfor %}
+        </div>
+        <div style="margin-top:12px"><a class="btn secondary" href="/">Add New Entry</a></div>
+    </div>
+</body>
+</html>

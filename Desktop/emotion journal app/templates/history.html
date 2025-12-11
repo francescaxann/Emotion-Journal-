@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Emotion Journal - History</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Load a local Chart fallback if the CDN is blocked/unavailable.
+    (function(){
+      function loadFallback(){
+        var s = document.createElement('script');
+        s.src = '/static/vendor/chart-fallback.js';
+        s.onload = function(){ console.log('Loaded local chart fallback'); };
+        document.head.appendChild(s);
+      }
+      // If Chart isn't present shortly after the CDN script, inject fallback.
+      setTimeout(function(){ if (typeof Chart === 'undefined') loadFallback(); }, 250);
+    })();
+  </script>
+</head>
+<body>
+  <div class="card wide">
+    <h1 class="title">Mood History</h1>
+    <p class="subtitle">A simple visualization of recent mood/stress levels.</p>
+    <canvas id="moodChart" height="120"></canvas>
+    <div style="margin-top:14px"><a class="btn secondary" href="/">Back</a></div>
+  </div>
+
+  <script>
+    async function fetchEntries(){
+      const r = await fetch('/api/entries');
+      return r.json();
+    }
+    function mapEmotionToScore(e){
+      const map = { 'happy':80, 'calm':70, 'neutral':60, 'sad':30, 'anxious':25, 'angry':20, 'stressed':15 };
+      return map[e] || 50;
+    }
+    function emotionColor(e){
+      const map = { 'happy':'#22c55e', 'calm':'#60a5fa', 'neutral':'#94a3b8', 'sad':'#64748b', 'anxious':'#f97316', 'angry':'#ef4444', 'stressed':'#f43f5e' };
+      return map[e] || '#94a3b8';
+    }
+    (async ()=>{
+      const data = await fetchEntries();
+      const entries = (data.entries || []).slice(-30);
+      const labels = entries.map(e=>e.timestamp.slice(5,16));
+      const stress = entries.map(e=> (typeof e.stress==='number')? e.stress : null);
+      const mood = entries.map(e=> (typeof e.stress==='number')? e.stress : mapEmotionToScore(e.emotion));
+      const pointColors = entries.map(e=> emotionColor(e.emotion));
+
+      // Fallback if Chart.js failed to load (network blocked or CDN not reachable)
+      if (typeof Chart === 'undefined') {
+        // simple fallback: render bars into the page so you can still see data
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '8px';
+        container.style.marginTop = '12px';
+        const wrap = document.querySelector('.card.wide');
+        entries.slice().reverse().forEach((e)=>{
+          const row = document.createElement('div');
+          row.style.display='flex';
+          row.style.alignItems='center';
+          row.style.gap='12px';
+          const tag = document.createElement('div'); tag.className='tag'; tag.textContent = e.emotion || 'unknown';
+          const when = document.createElement('div'); when.className='muted'; when.style.minWidth='140px'; when.textContent = e.timestamp;
+          const barWrap = document.createElement('div'); barWrap.style.flex='1'; barWrap.style.background='#f1f6f6'; barWrap.style.borderRadius='8px'; barWrap.style.height='18px';
+          const val = document.createElement('div'); val.style.height='100%'; val.style.borderRadius='8px';
+          const pct = (typeof e.stress==='number')? e.stress : mapEmotionToScore(e.emotion);
+          val.style.width = Math.max(4, pct) + '%';
+          val.style.background = emotionColor(e.emotion);
+          barWrap.appendChild(val);
+          row.appendChild(tag); row.appendChild(when); row.appendChild(barWrap);
+          container.appendChild(row);
+        });
+        // insert after canvas
+        const canvas = document.getElementById('moodChart');
+        canvas.style.display = 'none';
+        canvas.parentNode.insertBefore(container, canvas.nextSibling);
+        return;
+      }
+
+      try {
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Mood (derived from emotion)',
+                data: mood,
+                borderColor: '#4b9b8e',
+                backgroundColor: 'rgba(75,155,142,0.12)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 6,
+                pointBackgroundColor: pointColors,
+              },
+              {
+                label: 'Stress (direct)',
+                data: stress,
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249,115,22,0.08)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 4,
+              }
+            ]
+          },
+          options: { scales: { y: { min:0, max:100 } } }
+        });
+      } catch (err) {
+        console.error('Chart rendering error:', err);
+        // degrade to fallback
+        const fallbackEvent = new Event('chartfallback');
+        window.dispatchEvent(fallbackEvent);
+      }
+    })();
+  </script>
+</body>
+</html>

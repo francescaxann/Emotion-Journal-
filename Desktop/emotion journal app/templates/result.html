@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion Journal - Result</title>
+</head>
+<body>
+    <h1>Result</h1>
+    <p>Placeholder result page.</p>
+    <a href="/">Back</a>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Analysis result — Emotion Journal Analyzer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script>
+    // Make analysis available to JS for saving
+    const ANALYSIS = {
+      text: `{{ text|e }}`,
+      dominant: `{{ analysis['dominant'] }}`,
+      norm_scores: {{ analysis['norm_scores']|tojson }},
+      stress_score: {{ analysis['stress_score'] }}
+    };
+  </script>
+</head>
+<body>
+  <main class="card">
+    <h1 class="title">Your reflection</h1>
+
+    <section class="result-block">
+      <h2>Detected emotions</h2>
+      <div class="chips">
+        {% for e, v in analysis['norm_scores'].items() %}
+          <div class="chip {% if e==analysis['dominant'] %}chip-dominant{% endif %}">
+            <strong>{{ e.capitalize() }}</strong>
+            <span class="score">{{ (v*100)|round(0) }}%</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <h3>Stress level</h3>
+      <div class="stress">
+        <div class="bar" style="--val: {{ (analysis['stress_score']*100)|round(0) }}%"></div>
+        <small>{{ (analysis['stress_score']*100)|round(0) }}% (approx.)</small>
+      </div>
+
+      <h3>Gentle reflection</h3>
+      <div class="reflection">{{ reflection }}</div>
+
+      <form action="{{ url_for('save_entry') }}" method="post" class="save-form" onsubmit="prepareSave()">
+        <input type="hidden" name="text" id="save-text" />
+        <input type="hidden" name="dominant" id="save-dominant" />
+        <input type="hidden" name="emotion_scores" id="save-emotion-scores" />
+        <input type="hidden" name="stress_score" id="save-stress" />
+
+        <button class="btn" type="submit">Save entry</button>
+      <a class="btn secondary" href="/">Back</a>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    function prepareSave() {
+      document.getElementById('save-text').value = ANALYSIS.text;
+      document.getElementById('save-dominant').value = ANALYSIS.dominant;
+      document.getElementById('save-emotion-scores').value = JSON.stringify(ANALYSIS.norm_scores);
+      document.getElementById('save-stress').value = ANALYSIS.stress_score;
+    }
+  </script>
+</body>
+</html>
