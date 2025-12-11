@@ -9,11 +9,19 @@ app = Flask(__name__)
 # File to store entries
 DATA_FILE = "entries.json"
 
+
 # Initialize the database (JSON file)
 def init_db():
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump([], f)
+    try:
+        if not os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "w") as f:
+                json.dump([], f)
+    except Exception:
+        # If the environment disallows file creation, fail silently; handlers will surface errors later.
+        pass
+
+# Ensure the data file exists on import (required when running under Gunicorn/Render)
+init_db()
 
 # Home page
 @app.route('/')
