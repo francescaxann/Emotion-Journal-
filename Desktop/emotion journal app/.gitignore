@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtualenvs
+.venv/
+venv/
+ENV/
+
+# Editor/system
+.DS_Store
+.vscode/
+.idea/
+
+# Logs and runtime
+flask.log
+*.log
+
+# Local entries (sensitive)
+entries.json
+
+# OS
+Thumbs.db

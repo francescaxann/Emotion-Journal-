@@ -3,7 +3,5 @@ Werkzeug==3.1.4
 pytest==7.4.0
 openai
 
-Flask==2.3.2
-
 # Use gunicorn as the production WSGI server
 gunicorn==20.1.0
